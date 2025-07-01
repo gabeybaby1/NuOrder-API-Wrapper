@@ -1,0 +1,58 @@
+import requests_oauthlib
+import time
+import random
+import hmac
+import hashlib
+import codecs
+
+class APIWrap:
+  def __init__(self, opt, url, info):
+      self.req = opt
+      self.consumer_key = '{CONSUMER KEY}'
+      self.consumer_secret_key = '{CONSUMER SECRET KEY}'
+      self.token = '{TOKEN}'
+      self.token_secret = '{SECRET TOKEN}'
+      self.version = '1.0'
+      self.algo = 'HMAC-SHA1'
+      self.url = url
+      self.ts = str(int(time.time()))
+      self.nonce = self.generateNonce()
+      self.info = info
+
+  def generateNonce(self):
+      value = random.randint(0,9)
+      for num in range(15):
+        value *= 10
+        value += random.randint(0,9)
+      return str(value)
+  
+  def generateSignature(self, ts, nonce):
+     string = (self.req).upper()+self.url+"?oauth_consumer_key=" + self.consumer_key + "&oauth_token=" + self.token + "&oauth_timestamp=" + ts + "&oauth_nonce=" + nonce + "&oauth_version=" + self.version + "&oauth_signature_method=" + self.algo + "&oauth_callback=oob"
+     #print(string)
+     key = self.consumer_secret_key + "&" + self.token_secret
+     return hmac.new(codecs.encode(key), codecs.encode(string), hashlib.sha1).hexdigest()
+    
+  def getURL(self): return self.url
+
+  def getAuthHeader(self):
+       headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'OAuth 1.0 Authorization Header',
+        "oauth_consumer_key": self.consumer_key,
+        'oauth_token': self.token,
+        'oauth_timestamp': self.ts,
+        'oauth_nonce': self.nonce,
+        'oauth_version': self.version,
+        'oauth_signature_method': self.algo,
+        'oauth_signature': self.generateSignature(self.ts, self.nonce)
+      }
+       return headers
+  
+  def APICall(self):
+     requ = requests_oauthlib.OAuth1Session(self.consumer_key, client_secret=self.consumer_secret_key, resource_owner_key=self.token, resource_owner_secret=self.token_secret)
+     if self.req.upper() == "GET": 
+      response = requ.get(self.getURL(), headers=self.getAuthHeader())
+     if self.req.upper() == "POST": 
+      response = requ.post(self.getURL(), headers=self.getAuthHeader())
+     return response
+
