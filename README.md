@@ -7,6 +7,6 @@ just call the class and initialize it with "POST" or "GET", then the target NuOr
 
 to execute it, call the "APICall()" function:
 
-    newCall.APICall()
+    response = newCall.APICall()
 
 this will return the whole response.
